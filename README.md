@@ -1,3 +1,14 @@
+# Git Commands
+## Clone & Connect
+`git clone https://github.com/NielsElmgaard/made4devops.git`
+`cd made4devops`
+`git remote add upstream https://github.com/DaFessor/made4devops.git`
+## Fetch and push updates
+`git fetch upstream`
+`git checkout main`
+`git merge upstream/main`
+`git push -u origin main`
+
 # Made4DevOps
 **M**odern **A**rduino **D**velopment **E**nvironment for **DevOps**
 
