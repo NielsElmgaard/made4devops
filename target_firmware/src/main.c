@@ -1,92 +1,219 @@
-#include <stdio.h>
 #include <util/delay.h>
 #include <avr/io.h>
-#include <limits.h>
-#include <avr/interrupt.h>
 #include "serial_com.h"
-#include "calculator.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <avr/interrupt.h>
+#include <stdbool.h>
+#include <string.h>
 
-ISR(TIMER1_OVF_vect)
+/* Exercise 7.2
+
+int main()
 {
-    // Toggle the LED connected to PB5 (Arduino Uno's built-in LED)
-    PORTB ^= (1 << PORTB7);
+    unsigned int counter = 0;
+    // Initialize the UART for serial communication
+    uart_init();
+    // Set all pins of PORTB as output
+    DDRB = 0xff;
+    do
+    {
+        // Turn led on
+        PORTB = 0xff;
+        // Print message to serial
+
+        printf("Counter: %d\n\r",counter++);
+        // Wait 0,25 seconds and then turn led off again
+        PORTB = 0x0;
+        // Wait 1 second and then repeat loop
+        _delay_ms(1000);
+    } while (1);
 }
+    */
 
-// Enough to hold a 32-bit integer as a string, including sign and null terminator
-#define INPUT_BUFFER_SIZE 12
+/* Exercise 7.3
+int main()
+{
+// Initialize the UART for serial communication
+uart_init();
+// Buffer for reading input from serial/stdin
+uint8_t input_buffer[100];
+do
+{
+    // Print message to serial
+    printf("Hallo from Arduino!\n\r");
+    // Read input from serial/stdin and ignore it
+    scanf("%s", input_buffer);
+    printf("You wrote: %s, Arschloch!\n\r", input_buffer);
+} while (1);
+}
+*/
 
+/* Exercise 7.4
+int main()
+{
+
+    // Initialize the UART for serial communication
+    uart_init();
+    DDRB = 0xff;
+    // Buffer for reading input from serial/stdin
+    int8_t input_buffer[100];
+
+    do
+    {
+        // Turn led on
+
+        printf("Write number:\n\r");
+
+        scanf("%s", input_buffer);
+
+        printf("You wrote: %s, Arschloch!\n\r", input_buffer);
+
+        int times = atoi(input_buffer);
+
+        for (int i = 0; i < times; i++)
+        {
+            PORTB = 0xff;
+            _delay_ms(67);
+            PORTB = 0x0;
+            _delay_ms(67);
+        }
+
+        // Print message to serial
+
+    } while (1);
+}
+    */
+
+/* Exercise 7.5
 int main()
 {
     // Initialize the UART for serial communication
     uart_init();
-    // Set all pins of PORTB as output (for the LED)
-    DDRB = 0xff;
-    PORTB = 0x00;
-    // Buffer for reading input from serial/stdin
-    char input_buffer[INPUT_BUFFER_SIZE];
-
-    TCCR1B = 0;             // - stop timer while we set it up
-    TCCR1A = 0;             // - normal mode, OC1A/OC1B disconnected
-    TCNT1 = 0;              // - reset timer count to 0
-    TIFR1 |= (1 << TOV1);   // - clear any stale flag
-    TIMSK1 |= (1 << TOIE1); // - enable overflow interrupt
-    /*
-        Normal mode, prescaler/256 (last instruction also starts timer).
-        The timer will count up from 0 to 0xffff, and then start all over
-        - whenever the timer goes back to 0 an interrupt is generated.
-        A prescaler of 256 means that the clock (16MHz) is divided by 256 = 62500.
-        So the reset/interrupt freq. is 65536/62500 = 1,048576 Hz.
-        Writing to TCCR1B also starts the timer, so we do it at the end of the setup
+    // Set prescaler to /1024
+    TCCR1B |= (1 << CS12) | (1 << CS10);
+    while (1)
+    {
+        printf("TCNT1 %u\n\r", TCNT1);
+        _delay_ms(500);
+    }
+}
     */
-    TCCR1B |= 0x04;
 
-    // Enable global interrupts
+/* Exercise 7.6
+#define PRESCALER 10        // Number of clock ticks to wait before timer firings. 10 bits...1024
+#define CLOCK_RATE 16000000 // Clock value
+
+// Number of timer ticks in a second. Number of clock ticks to wait until getting an interrupt
+#define COUNTER_VALUE ((CLOCK_RATE >> PRESCALER) / 2) // Divide by 2 for twice a second (both LED_ON and LED_OFF in that second)
+// TIMER1 compare Interrupt-Service-Routine
+// fires when counter value matches
+ISR(TIMER1_COMPA_vect)
+{
+PORTB ^= _BV(PORTB7); // Tells the compiler that this function is an ISR. Toggle output pin every time the timer fires. Toggle LED on PB7
+}
+int main()
+{
+// Initialize the UART for serial communication
+uart_init();
+// Buffer for reading input from serial/stdin
+uint8_t input_buffer[100];
+
+DDRB |= _BV(PORTB7); // Set PB7 as output
+
+// Output-Compare-register for timer 1: Configure timer
+OCR1A = COUNTER_VALUE; // Set compare match value (~1 second)
+
+// Timer/Counter1 Control Register
+TCCR1A = 0x00;                       // Normal mode
+TCCR1B |= (1 << WGM12);              // CTC mode (clear timer on compare) -- compare to OCR1A. If match: clear counter and give interrupt
+TCCR1B |= (1 << CS10) | (1 << CS12); // Set prescaler to 1024 (divide the clock by 1024: 16 MHz -> 16 KHz). To slow things down and wait a bit longer before counter overflows
+
+// I want an interrupt: Set bit in register, otherwise flag is set in TIFR1 register and interrupt service won't run.
+TIMSK1 |= (1 << OCIE1A); // Set interrupt mask bit
+
+sei(); // Enable global interrupts
+
+do
+{
+    // Print message to serial
+    printf("Hallo from Arduino!\n\r");
+    // Read input from serial/stdin and ignore it
+    scanf("%s", input_buffer);
+    printf("You wrote: %s, Arschloch!\n\r", input_buffer);
+} while (1);
+}
+*/
+
+#define PRESCALER 1024
+#define CLOCK_RATE 16000000
+
+#define TIMER1_COUNTER_VALUE ((CLOCK_RATE / PRESCALER) / 20) // Task 1 blink the onboard LED with a frequency of 10 Hz.
+
+volatile uint8_t button_tick = 0; // Task 2 checks a button every 50 ms and transmit a text message over the UART/stdout if the button is pressed.
+
+// Task 1 ISR
+ISR(TIMER1_COMPA_vect)
+{
+    PORTB ^= _BV(PORTB7);
+}
+
+// Task 2 ISR
+ISR(TIMER0_COMPA_vect)
+{
+    button_tick++;
+    if (button_tick >= 5) // 50 * 10 ms = 50 ms since TIMER0 fires approx every 10 ms
+    {
+        button_tick = 0;
+        if (!(PINA & (1 << PINA0))) // Check if button is pressed (active low/pullup)
+        {
+            printf("BUTTON_PRESSED\n\r");
+        }
+    }
+}
+
+int main()
+{
+    uart_init();
+    uint8_t input_buffer[100];
+
+    DDRB |= _BV(PORTB7);    // LED
+    DDRA &= ~(1 << DDA0);    // Button as Input
+    PORTA |= (1 << PORTA0); // Enable pull-up for button
+
+    // Task 1 (TIMER1)
+    OCR1A = TIMER1_COUNTER_VALUE;
+
+    TCCR1A = 0x00;
+    TCCR1B |= (1 << WGM12);
+    TCCR1B |= (1 << CS10) | (1 << CS12);
+
+    TIMSK1 |= (1 << OCIE1A);
+
+    // Task 2 (TIMER0)
+    OCR0A = ((CLOCK_RATE / 1024) * 0.01); // = 156
+
+    TCCR0A = 0x00;
+    TCCR0A |= (1 << WGM01);
+    TCCR0B |= (1 << CS00) | (1 << CS02);
+
+    TIMSK0 |= (1 << OCIE0A);
+
     sei();
 
-    // Print message to serial
-    printf("Hallo from Arduino, let's calcucate!\n\r");
-    // Read input from serial/stdin into input_buffer
-    do
+    while (1)
     {
-        printf("Please enter a decimal number [%ld .. %ld] and press Enter:\n\r", INT32_MIN, INT32_MAX);
-        int c, index = 0;
-        while (index < INPUT_BUFFER_SIZE - 1)
+        // Task 3
+        if (scanf("%s", input_buffer) == 1)
         {
-            c = getchar();
-            // Stop reading if we encounter EOF or a newline character
-            if (c == EOF || c == '\n' || c == '\r')
+            if (strcmp((char *)input_buffer, "BUTTON_PRESSED") == 0)
             {
-                printf("\n\r");
-                break;
+                printf("Task 3 received the button trigger!\n\r");
             }
-            // Only accept digits, ignore other characters,
-            // but allow a leading '-' for negative numbers
-            if ((c >= '0' && c <= '9') || (c == '-' && index == 0))
+            else
             {
-                input_buffer[index++] = c;
-                // Echo the character read back to the sender so it shows up in the terminal
-                putchar(c);
+                printf("Echo: %s\n\r", input_buffer);
             }
         }
-
-        // Null-terminate the string we read
-        input_buffer[index] = '\0';
-
-        calctask_t task;
-        // Convert the input string to a long integer and store it in task.operand1
-        if (sscanf(input_buffer, "%ld", &task.operand1) != 1)
-        {
-            printf("\n\rInvalid input. Please enter a valid decimal number.\n\r");
-            continue;
-        }
-        task.operand2 = 42; // Just a dummy value for testing
-        if (calculate(CALC_ADD, &task))
-        {
-            printf("\n\rResult of %ld + %ld = %ld\n\r", task.operand1, task.operand2, task.result);
-        }
-        else
-        {
-            printf("\n\rCalculation failed (unknown operation)\n\r");
-        }
-    } while (1);
+    }
 }
