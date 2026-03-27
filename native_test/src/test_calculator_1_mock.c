@@ -21,7 +21,8 @@ void test_calculator_add()
 {
     calctask_t task = {.operand1 = 5, .operand2 = 3, .result = 0};
     add_op_ExpectAndReturn(&task, 1);
-    TEST_ASSERT_TRUE(calculate(CALC_ADD, &task));}
+    TEST_ASSERT_TRUE(calculate(CALC_ADD, &task));
+}
 
 void test_calculator_mul()
 {
@@ -41,4 +42,15 @@ void test_calculator_div_by_zero()
 {
     calctask_t task = {.operand1 = 12, .operand2 = 0};
     TEST_ASSERT_FALSE(calculate(CALC_DIV, &task));
+}
+
+void test_calculator_calculate_Task_is_null_Returns_false(void)
+{
+    TEST_ASSERT_FALSE(calculate(CALC_DIV, NULL));
+}
+
+void test_calculator_calculate_Default_switch_case_Returns_false(void){
+     calctask_t task = {.operand1 = 67, .operand2 = 67};
+     calcop_t invalid_op = (calcop_t)6767;
+    TEST_ASSERT_FALSE(calculate(invalid_op, &task));
 }
