@@ -145,6 +145,7 @@ do
 }
 */
 
+/* Exercise 7.7
 #define PRESCALER 1024
 #define CLOCK_RATE 16000000
 
@@ -217,3 +218,62 @@ int main()
         }
     }
 }
+    */
+
+// Exercise 9.2
+#include "blink.h"
+void blink()
+{
+    PORTB ^= (1 << PB7);
+    PORTA ^= (1 << PA1);
+}
+
+void send_text(){
+    printf("Hello\r\n");
+}
+
+int main()
+{
+    uart_init();
+    blink_init(1024, blink,send_text);
+    sei();
+
+    while (1)
+    {
+        ;
+    }
+}
+
+
+/* Exercise 9.3
+#include "scheduler.h"
+#include "task_a.h"
+#include "task_b.h"
+#include "task_c.h"
+
+task_t task_list[] =
+{
+  // period in ms, task to run, ready? (to run)
+  {.period=100, .task_p=task_a_run, .ticks=0},
+  {.period=1010, .task_p=task_b_run, .ticks=0},
+  {.period=3000, .task_p=task_c_run, .ticks=0}
+};
+uint8_t task_count = sizeof(task_list)/sizeof(task_t);
+
+int main()
+{
+  // Init
+  uart_init();
+  task_a_init();
+  task_b_init();
+  scheduler_init(task_list, task_count);
+  sei();
+
+  // Run
+  while(1)
+  {
+    dispatcher();
+  }
+  return 1;
+}
+*/
