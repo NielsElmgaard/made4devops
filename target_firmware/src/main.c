@@ -221,21 +221,16 @@ int main()
     */
 
 // Exercise 9.2
-#include "blink.h"
-void blink()
+#include "send_text.h"
+void send_text()
 {
-    PORTB ^= (1 << PB7);
-    PORTA ^= (1 << PA1);
-}
-
-void send_text(){
     printf("Hello\r\n");
 }
 
 int main()
 {
     uart_init();
-    blink_init(1024, blink,send_text);
+    send_text_init(2, send_text);
     sei();
 
     while (1)
@@ -243,7 +238,6 @@ int main()
         ;
     }
 }
-
 
 /* Exercise 9.3
 #include "scheduler.h"
