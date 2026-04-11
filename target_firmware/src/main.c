@@ -220,7 +220,7 @@ int main()
 }
     */
 
-// Exercise 9.2
+/* Exercise 9.2
 #include "send_text.h"
 void send_text()
 {
@@ -237,37 +237,35 @@ int main()
     {
         ;
     }
-}
+}*/
 
-/* Exercise 9.3
+// Exercise 9.3
 #include "scheduler.h"
 #include "task_a.h"
 #include "task_b.h"
 #include "task_c.h"
 
 task_t task_list[] =
-{
-  // period in ms, task to run, ready? (to run)
-  {.period=100, .task_p=task_a_run, .ticks=0},
-  {.period=1010, .task_p=task_b_run, .ticks=0},
-  {.period=3000, .task_p=task_c_run, .ticks=0}
-};
-uint8_t task_count = sizeof(task_list)/sizeof(task_t);
+    {
+        // period in ms, task to run, ready? (to run)
+        {.period = 1000, .task_p = task_a_run, .ticks = 0},
+        {.period = 500, .task_p = task_b_run, .ticks = 0},
+        {.period = 6000, .task_p = task_c_run, .ticks = 0}};
+uint8_t task_count = sizeof(task_list) / sizeof(task_t);
 
 int main()
 {
-  // Init
-  uart_init();
-  task_a_init();
-  task_b_init();
-  scheduler_init(task_list, task_count);
-  sei();
+    // Init
+    uart_init();
+    task_a_init();
+    task_b_init();
+    scheduler_init(task_list, task_count);
+    sei();
 
-  // Run
-  while(1)
-  {
-    dispatcher();
-  }
-  return 1;
+    // Run
+    while (1)
+    {
+        dispatcher();
+    }
+    return 1;
 }
-*/

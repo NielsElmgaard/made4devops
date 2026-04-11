@@ -24,13 +24,13 @@ void send_text_init(uint16_t frequency, send_text_callback_t callback)
 
   TCCR1A = 0;
   TCCR1B = (1 << WGM12) | (1 << CS12) | (1 << CS10); // Prescaler: 1024
-  OCR1A = (uint16_t)((F_CPU / 1024) * frequency) - 1;
-  TIMSK1 = (1 << OCIE1A); // Enable Timer Compare match interrupt
+  OCR1B = (uint16_t)((F_CPU / 1024) * frequency) - 1;
+  TIMSK1 = (1 << OCIE1B); // Enable Timer Compare match interrupt
 
   cb = callback;
 }
 
-ISR(TIMER1_COMPA_vect)
+ISR(TIMER1_COMPB_vect)
 {
   if (NULL != cb)
   {
