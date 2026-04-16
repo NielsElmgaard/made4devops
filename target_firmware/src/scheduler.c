@@ -18,7 +18,7 @@ void scheduler_init(task_t tasks[], uint8_t count)
     uint16_t frequency = 1000/MS_PER_TICK; // Hz
     TCCR1A = 0;
     TCCR1B = (1<<WGM12) | (1<<CS11) | (1<<CS10); //Prescaler: F_CPU/64, CTC mode
-    OCR1A  = F_CPU/(2*64*frequency);
+    OCR1A  = F_CPU/(64*frequency); // Removed 2*
     TIMSK1 = (1<<OCIE1A);  // Enable Timer Compare match interrupt
 }
 

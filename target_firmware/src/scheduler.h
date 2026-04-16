@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define MS_PER_TICK    10
+#define MS_PER_TICK    1 // sættes til 67. Resultat: Da frequency = 1000 / 67 = 14,925..., bliver det rundet ned til 14 (uoverensstemmelse i systemet), task_a blinker langsommere
 
 typedef struct
 {
